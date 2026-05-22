@@ -1,6 +1,7 @@
 package com.smartnotes.smartnotes_backend.repository;
 
 
+import com.smartnotes.smartnotes_backend.entity.Note;
 import com.smartnotes.smartnotes_backend.entity.Todo;
 import com.smartnotes.smartnotes_backend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -25,4 +26,6 @@ public interface TodoRepository extends JpaRepository<Todo, Long> {
     // find todos due within the next hour (for reminders)
     @Query("SELECT t FROM Todo t JOIN FETCH t.user WHERE t.dueDate BETWEEN :now AND :soon AND t.completed = false")
     List<Todo> findUpcomingTodos(LocalDateTime now, LocalDateTime soon);
+
+    List<Todo> findByNoteAndUser(Note note, User user);
 }

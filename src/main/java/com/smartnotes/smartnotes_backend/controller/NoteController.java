@@ -3,6 +3,7 @@ package com.smartnotes.smartnotes_backend.controller;
 
 import com.smartnotes.smartnotes_backend.dto.NoteRequest;
 import com.smartnotes.smartnotes_backend.dto.NoteResponse;
+import com.smartnotes.smartnotes_backend.dto.TodoResponse;
 import com.smartnotes.smartnotes_backend.entity.User;
 import com.smartnotes.smartnotes_backend.service.NoteService;
 import lombok.RequiredArgsConstructor;
@@ -53,5 +54,13 @@ public class NoteController {
             @AuthenticationPrincipal User user) {
         noteService.delete(id, user);
         return ResponseEntity.noContent().build();
+    }
+
+    // Get all todos linked to a specific note
+    @GetMapping("/{id}/todos")
+    public ResponseEntity<List<TodoResponse>> getTodosForNote(
+            @PathVariable Long id,
+            @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(noteService.getTodosForNote(id, user));
     }
 }

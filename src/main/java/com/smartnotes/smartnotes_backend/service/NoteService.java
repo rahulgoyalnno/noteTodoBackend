@@ -2,11 +2,14 @@ package com.smartnotes.smartnotes_backend.service;
 
 import com.smartnotes.smartnotes_backend.dto.NoteRequest;
 import com.smartnotes.smartnotes_backend.dto.NoteResponse;
+import com.smartnotes.smartnotes_backend.dto.TodoResponse;
 import com.smartnotes.smartnotes_backend.entity.Note;
+import com.smartnotes.smartnotes_backend.entity.Todo;
 import com.smartnotes.smartnotes_backend.entity.User;
 import com.smartnotes.smartnotes_backend.kafka.NoteEvent;
 import com.smartnotes.smartnotes_backend.kafka.NoteEventProducer;
 import com.smartnotes.smartnotes_backend.repository.NoteRepository;
+import com.smartnotes.smartnotes_backend.repository.TodoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +21,7 @@ public class NoteService {
 
     private final NoteRepository noteRepository;
     private final NoteEventProducer noteEventProducer;   // ← add this
+    private final TodoRepository todoRepository;
 
 
     public NoteResponse create(NoteRequest req, User user) {
@@ -83,6 +87,36 @@ public class NoteService {
         res.setAiFollowUp(note.getAiFollowUp());
         res.setCreatedAt(note.getCreatedAt());
         res.setUpdatedAt(note.getUpdatedAt());
+        return res;
+    }
+
+    // Add method
+    public List<TodoResponse> getTodosForNote(Long noteId, User user) {
+        Note note = noteRepository.findByIdAndUser(noteId, user)
+                .orElseThrow(() -> new RuntimeException("Note not found"));
+
+        return todoRepository.findByNoteAndUser(note, user)
+                .stream()
+                .map(this::todoToResponse)
+                .toList();
+    }
+
+    // Add this private helper (converts Todo → TodoResponse)
+    private TodoResponse todoToResponse(Todo todo) {
+        TodoResponse res = new TodoResponse();
+        res.setId(todo.getId());
+        res.setTitle(todo.getTitle());
+        res.setDescription(todo.getDescription());
+        res.setCompleted(todo.isCompleted());
+        res.setPriority(todo.getPriority());
+        res.setDueDate(todo.getDueDate());
+        res.setCreatedAt(todo.getCreatedAt());
+        res.setNoteId(todo.getNote() != null ? todo.getNote().getId() : null);
+        res.setOverdue(
+                todo.getDueDate() != null
+                        && todo.getDueDate().isBefore(java.time.LocalDateTime.now())
+                        && !todo.isCompleted()
+        );
         return res;
     }
 }

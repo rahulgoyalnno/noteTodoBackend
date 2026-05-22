@@ -31,6 +31,48 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: smartnotes-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on: []
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: smartnotes-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on: [prometheus, loki]
+
+  loki:
+    image: grafana/loki:latest
+    container_name: smartnotes-loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: smartnotes-promtail
+    volumes:
+      - ./logs:/logs                                    # your Spring logs folder
+      - ./monitoring/promtail.yml:/etc/promtail/config.yml
+    depends_on: [loki]
+
+  zipkin:
+    image: openzipkin/zipkin:latest
+    container_name: smartnotes-zipkin
+    ports:
+      - "9411:9411"
 
 volumes:
   postgres_data:
+  grafana_data:

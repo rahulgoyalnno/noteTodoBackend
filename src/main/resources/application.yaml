@@ -30,3 +30,47 @@ server:
 ollama:
   base-url: http://localhost:11434
   model: gemma4
+
+# ── Actuator ──────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, prometheus, loggers, threaddump, heapdump
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: smartnotes          # labels all metrics with app name
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true     # tracks p50, p95, p99 latency
+
+  # ── Tracing (Zipkin) ──────────────────────────────────────
+  tracing:
+    sampling:
+      probability: 1.0                 # trace 100% of requests (use 0.1 in prod)
+
+  zipkin:
+    base-url: http://localhost:9411
+
+# ── P6Spy (SQL profiling) ─────────────────────────────────
+  decorator:
+    datasource:
+      p6spy:
+        enable-logging: true
+        log-format: "%(currentTime) | %(executionTime)ms | %(sql)"
+
+# ── Logging ───────────────────────────────────────────────
+  logging:
+    level:
+      com.smartnotes: DEBUG              # your app — full debug logs
+      org.springframework.security: INFO
+      org.hibernate.SQL: DEBUG           # shows SQL (P6Spy also does this)
+    pattern:
+      console: "%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file:
+      name: logs/smartnotes.log          # writes logs to file for Loki
